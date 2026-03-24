@@ -92,9 +92,11 @@ function highlightTocItem(id) {
 
 function toggleTOC() {
     const sidebar = document.getElementById("toc-sidebar")
+    const handle = document.getElementById("toc-resize-handle")
     if (!sidebar) return
     tocVisible = !tocVisible
     sidebar.classList.toggle("hidden", !tocVisible)
+    if (handle) handle.classList.toggle("hidden", !tocVisible)
     try {
         localStorage.setItem("mdv-toc-visible", tocVisible ? "1" : "0")
     } catch (_e) {
@@ -109,9 +111,58 @@ function loadTocState() {
         tocVisible = false
     }
     const sidebar = document.getElementById("toc-sidebar")
+    const handle = document.getElementById("toc-resize-handle")
     if (sidebar) {
         sidebar.classList.toggle("hidden", !tocVisible)
+        // Restore saved width
+        try {
+            const savedWidth = localStorage.getItem("mdv-toc-width")
+            if (savedWidth) {
+                sidebar.style.width = savedWidth + "px"
+            }
+        } catch (_e) {
+            // ignore
+        }
     }
+    if (handle) {
+        handle.classList.toggle("hidden", !tocVisible)
+        setupResizeHandle(sidebar, handle)
+    }
+}
+
+function setupResizeHandle(sidebar, handle) {
+    let startX = 0
+    let startWidth = 0
+
+    handle.addEventListener("mousedown", (e) => {
+        e.preventDefault()
+        startX = e.clientX
+        startWidth = sidebar.getBoundingClientRect().width
+        handle.classList.add("dragging")
+        document.body.style.cursor = "col-resize"
+        document.body.style.userSelect = "none"
+
+        function onMouseMove(e) {
+            const newWidth = Math.max(120, Math.min(window.innerWidth / 2, startWidth + (e.clientX - startX)))
+            sidebar.style.width = newWidth + "px"
+        }
+
+        function onMouseUp() {
+            handle.classList.remove("dragging")
+            document.body.style.cursor = ""
+            document.body.style.userSelect = ""
+            document.removeEventListener("mousemove", onMouseMove)
+            document.removeEventListener("mouseup", onMouseUp)
+            try {
+                localStorage.setItem("mdv-toc-width", Math.round(sidebar.getBoundingClientRect().width))
+            } catch (_e) {
+                // ignore
+            }
+        }
+
+        document.addEventListener("mousemove", onMouseMove)
+        document.addEventListener("mouseup", onMouseUp)
+    })
 }
 
 function isTocVisible() {
