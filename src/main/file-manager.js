@@ -30,6 +30,12 @@ function watchFile(filePath, callback) {
                     } catch (_e) {
                         // file may have been deleted momentarily (vim-style save)
                     }
+                    // Re-establish watch — editors that rename-over-original
+                    // (vim, VS Code, etc.) replace the inode, killing the watcher
+                    if (watchers.has(resolved)) {
+                        watcher.close()
+                        startWatch()
+                    }
                 }, 100)
             })
             watcher.on("error", () => {
