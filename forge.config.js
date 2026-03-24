@@ -39,13 +39,8 @@ module.exports = {
             }
         },
         {
-            name: "@electron-forge/maker-rpm",
-            config: {
-                mimeType: ["text/markdown"],
-                options: {
-                    name: "mdv"
-                }
-            }
+            name: "@electron-forge/maker-zip",
+            platforms: ["linux"]
         }
     ]
 }
