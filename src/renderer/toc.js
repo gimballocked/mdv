@@ -95,6 +95,23 @@ function toggleTOC() {
     if (!sidebar) return
     tocVisible = !tocVisible
     sidebar.classList.toggle("hidden", !tocVisible)
+    try {
+        localStorage.setItem("mdv-toc-visible", tocVisible ? "1" : "0")
+    } catch (_e) {
+        // ignore
+    }
+}
+
+function loadTocState() {
+    try {
+        tocVisible = localStorage.getItem("mdv-toc-visible") === "1"
+    } catch (_e) {
+        tocVisible = false
+    }
+    const sidebar = document.getElementById("toc-sidebar")
+    if (sidebar) {
+        sidebar.classList.toggle("hidden", !tocVisible)
+    }
 }
 
 function isTocVisible() {
@@ -102,4 +119,4 @@ function isTocVisible() {
 }
 
 // eslint-disable-next-line no-unused-vars
-const TOC = { generateTOC, toggleTOC, isTocVisible }
+const TOC = { generateTOC, toggleTOC, isTocVisible, loadTocState }

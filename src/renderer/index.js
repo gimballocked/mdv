@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     Themes.loadSavedTheme()
+    TOC.loadTocState()
 
     // Set up drag-and-drop
     document.addEventListener("dragover", (e) => {
