@@ -1,0 +1,50 @@
+{
+    "name": "mdv",
+    "productName": "Markdown Viewer",
+    "description": "A standalone Markdown file viewer",
+    "version": "1.0.0",
+    "main": "src/main/main.js",
+    "scripts": {
+        "start": "electron .",
+        "format": "prettier -w src/ scripts/",
+        "eslint": "eslint src/ scripts/",
+        "vendor": "node scripts/copy-vendor.js",
+        "postinstall": "npm run vendor",
+        "make": "electron-forge make"
+    },
+    "prettier": {
+        "printWidth": 130,
+        "tabWidth": 4,
+        "trailingComma": "none",
+        "semi": false
+    },
+    "dependencies": {
+        "markdown-it": "^14.1.0",
+        "markdown-it-abbr": "^2.0.0",
+        "markdown-it-attrs": "^4.2.0",
+        "markdown-it-deflist": "^3.0.0",
+        "markdown-it-emoji": "^3.0.0",
+        "markdown-it-footnote": "^4.0.0",
+        "markdown-it-ins": "^4.0.0",
+        "markdown-it-mark": "^4.0.0",
+        "markdown-it-sub": "^2.0.0",
+        "markdown-it-sup": "^2.0.0",
+        "markdown-it-task-lists": "^2.1.1"
+    },
+    "devDependencies": {
+        "@electron-forge/cli": "^7.10.2",
+        "@electron-forge/maker-deb": "^7.10.2",
+        "@electron-forge/maker-rpm": "^7.10.2",
+        "@electron-forge/maker-squirrel": "^7.10.2",
+        "@electron-forge/maker-zip": "^7.10.2",
+        "@eslint/js": "^9.0.0",
+        "electron": "^39.2.6",
+        "eslint": "^9.0.0",
+        "github-markdown-css": "^5.8.1",
+        "globals": "^15.0.0",
+        "katex": "^0.16.21",
+        "mermaid": "^11.4.1",
+        "prettier": "^3.0.0",
+        "prismjs": "^1.29.0"
+    }
+}

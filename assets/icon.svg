@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90D9"/>
+      <stop offset="100%" style="stop-color:#2E5C8A"/>
+    </linearGradient>
+    <linearGradient id="page" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF"/>
+      <stop offset="100%" style="stop-color:#F0F0F0"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="4" stdDeviation="12" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect x="32" y="32" width="960" height="960" rx="180" ry="180" fill="url(#bg)"/>
+
+  <!-- Page/document shape -->
+  <g filter="url(#shadow)">
+    <!-- Dog-ear page -->
+    <path d="M240,160 L640,160 L784,304 L784,864 L240,864 Z" fill="url(#page)" stroke="none"/>
+    <!-- Dog-ear fold -->
+    <path d="M640,160 L640,304 L784,304 Z" fill="#D8D8D8" stroke="none"/>
+  </g>
+
+  <!-- Markdown "M" mark -->
+  <g transform="translate(340, 380)">
+    <rect x="0" y="0" width="344" height="280" rx="24" fill="#2E5C8A" opacity="0.9"/>
+    <!-- M letterform -->
+    <path d="M60,230 L60,50 L112,50 L172,140 L232,50 L284,50 L284,230 L240,230 L240,120 L185,205 L159,205 L104,120 L104,230 Z"
+          fill="#FFFFFF"/>
+  </g>
+
+  <!-- Down arrow / viewer hint -->
+  <path d="M476,720 L512,760 L548,720" stroke="#2E5C8A" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+
+  <!-- Decorative text lines on page (above the M badge) -->
+  <rect x="320" y="240" width="240" height="14" rx="7" fill="#CCCCCC"/>
+  <rect x="320" y="275" width="180" height="14" rx="7" fill="#DDDDDD"/>
+  <rect x="320" y="310" width="300" height="14" rx="7" fill="#DDDDDD"/>
+
+  <!-- Decorative text lines below the M badge -->
+  <rect x="320" y="700" width="260" height="12" rx="6" fill="#DDDDDD"/>
+  <rect x="320" y="726" width="200" height="12" rx="6" fill="#E0E0E0"/>
+</svg>
