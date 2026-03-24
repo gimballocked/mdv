@@ -1,6 +1,7 @@
 const tabs = []
 let activeTabId = null
 let nextTabId = 1
+let restoringSession = false
 
 const tabBar = () => document.getElementById("tab-bar")
 const contentArea = () => document.getElementById("content-area")
@@ -32,16 +33,16 @@ function createTab(filePath, title) {
 
     switchTab(id)
     updateEmptyState()
+    saveSession()
     return id
 }
 
 function switchTab(id) {
-    // Save current scroll
-    if (activeTabId !== null) {
+    // Save current scroll from the actual scroll container
+    if (activeTabId !== null && !restoringSession) {
         const current = findTab(activeTabId)
-        const currentDiv = document.getElementById(`tab-content-${activeTabId}`)
-        if (current && currentDiv) {
-            current.scrollTop = currentDiv.scrollTop
+        if (current) {
+            current.scrollTop = contentArea().scrollTop
         }
     }
 
@@ -57,17 +58,18 @@ function switchTab(id) {
         div.classList.toggle("hidden", div.id !== `tab-content-${id}`)
     }
 
-    // Restore scroll
+    // Restore scroll on the actual scroll container
     const tab = findTab(id)
-    const div = document.getElementById(`tab-content-${id}`)
-    if (tab && div) {
-        div.scrollTop = tab.scrollTop
+    if (tab) {
+        contentArea().scrollTop = tab.scrollTop
     }
 
     // Update window title
     if (tab) {
         document.title = `${tab.title} - Markdown Viewer`
     }
+
+    saveSession()
 }
 
 function closeTab(id) {
@@ -101,6 +103,7 @@ function closeTab(id) {
     }
 
     updateEmptyState()
+    saveSession()
 }
 
 function getActiveTab() {
@@ -133,6 +136,36 @@ function updateEmptyState() {
 }
 
 
+function saveSession() {
+    if (restoringSession) return
+    try {
+        // Snapshot active tab's scroll from the actual scroll container
+        const active = findTab(activeTabId)
+        if (active) {
+            active.scrollTop = contentArea().scrollTop
+        }
+        const data = {
+            tabs: tabs.map((t) => ({ filePath: t.filePath, scrollTop: t.scrollTop })),
+            activeTab: active ? active.filePath : null
+        }
+        localStorage.setItem("mdv-session", JSON.stringify(data))
+    } catch (_e) {
+        // ignore
+    }
+}
+
+function setRestoring(v) {
+    restoringSession = v
+}
+
+function getSession() {
+    try {
+        return JSON.parse(localStorage.getItem("mdv-session"))
+    } catch (_e) {
+        return null
+    }
+}
+
 function escapeHtml(str) {
     const div = document.createElement("div")
     div.textContent = str
@@ -140,4 +173,4 @@ function escapeHtml(str) {
 }
 
 // eslint-disable-next-line no-unused-vars
-const Tabs = { createTab, switchTab, closeTab, getActiveTab, findTabByPath, getMarkdownBody, getTabContentDiv }
+const Tabs = { createTab, switchTab, closeTab, getActiveTab, findTabByPath, getMarkdownBody, getTabContentDiv, saveSession, getSession, setRestoring }

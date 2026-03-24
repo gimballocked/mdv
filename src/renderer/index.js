@@ -31,17 +31,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const body = Tabs.getMarkdownBody(tab.id)
         if (!body) return
 
-        // Save scroll position
-        const contentDiv = Tabs.getTabContentDiv(tab.id)
-        const scrollTop = contentDiv ? contentDiv.scrollTop : 0
+        // Save scroll position from the actual scroll container
+        const area = document.getElementById("content-area")
+        const scrollTop = area ? area.scrollTop : 0
 
         await Markdown.renderToContainer(data.content, body)
         Links.setupLinkHandling(body)
         TOC.generateTOC(body)
 
         // Restore scroll position
-        if (contentDiv) {
-            contentDiv.scrollTop = scrollTop
+        if (area) {
+            area.scrollTop = scrollTop
         }
     })
 
@@ -64,13 +64,54 @@ document.addEventListener("DOMContentLoaded", () => {
         if (filePath) await openFile(filePath)
     })
 
+    // Save session on scroll (debounced)
+    let scrollSaveTimer = null
+    document.getElementById("content-area").addEventListener("scroll", () => {
+        if (scrollSaveTimer) clearTimeout(scrollSaveTimer)
+        scrollSaveTimer = setTimeout(() => Tabs.saveSession(), 200)
+    })
+
+    // Save session before app closes
+    window.addEventListener("beforeunload", () => {
+        Tabs.saveSession()
+    })
+
     // Set up Prism autoloader path
     if (typeof Prism !== "undefined" && Prism.plugins && Prism.plugins.autoloader) {
         Prism.plugins.autoloader.languages_path = "../vendor/prism-components/"
     }
 
-    // Open any files passed via CLI args
-    window.mdv.getInitialFiles().then(async (files) => {
+    // Restore saved session, then open any CLI arg files on top
+    const session = Tabs.getSession()
+    const restorePromise = (async () => {
+        if (session && session.tabs && session.tabs.length > 0) {
+            Tabs.setRestoring(true)
+            for (const saved of session.tabs) {
+                await openFile(saved.filePath)
+                // Patch saved scroll into the tab object
+                const tab = Tabs.findTabByPath(saved.filePath)
+                if (tab) tab.scrollTop = saved.scrollTop || 0
+            }
+            // Switch to the previously active tab
+            if (session.activeTab) {
+                const active = Tabs.findTabByPath(session.activeTab)
+                if (active) {
+                    Tabs.switchTab(active.id)
+                }
+            }
+            Tabs.setRestoring(false)
+            // Restore active tab's scroll after layout settles
+            requestAnimationFrame(() => {
+                const activeTab = Tabs.getActiveTab()
+                if (activeTab) {
+                    document.getElementById("content-area").scrollTop = activeTab.scrollTop
+                }
+            })
+        }
+    })()
+
+    restorePromise.then(async () => {
+        const files = await window.mdv.getInitialFiles()
         for (const f of files) {
             await openFile(f)
         }
