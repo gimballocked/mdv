@@ -59,8 +59,7 @@ function setupScrollTracking(container, headings) {
         tocObserver.disconnect()
     }
 
-    // Find the scrollable parent (tab-content div)
-    const scrollParent = container.closest(".tab-content") || container
+    const scrollParent = document.getElementById("content-area")
 
     tocObserver = new IntersectionObserver(
         (entries) => {
@@ -85,8 +84,15 @@ function setupScrollTracking(container, headings) {
 function highlightTocItem(id) {
     const sidebar = document.getElementById("toc-sidebar")
     if (!sidebar) return
+    let activeLink = null
     for (const a of sidebar.querySelectorAll("a")) {
-        a.classList.toggle("active", a.getAttribute("href") === `#${id}`)
+        const isActive = a.getAttribute("href") === `#${id}`
+        a.classList.toggle("active", isActive)
+        if (isActive) activeLink = a
+    }
+    // Scroll the TOC sidebar so the active item is visible
+    if (activeLink) {
+        activeLink.scrollIntoView({ block: "nearest", behavior: "smooth" })
     }
 }
 

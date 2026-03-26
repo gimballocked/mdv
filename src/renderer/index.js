@@ -37,7 +37,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         await Markdown.renderToContainer(data.content, body)
         Links.setupLinkHandling(body)
-        TOC.generateTOC(body)
+        // Only update TOC if this is the active tab
+        const activeTab = Tabs.getActiveTab()
+        if (activeTab && activeTab.id === tab.id) {
+            TOC.generateTOC(body)
+        }
 
         // Restore scroll position
         if (area) {

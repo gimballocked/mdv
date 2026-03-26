@@ -1,0 +1,144 @@
+#find-bar {
+    position: absolute;
+    top: 0;
+    right: 20px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    background: #f6f8fa;
+    border: 1px solid #d0d7de;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+#find-bar.hidden {
+    display: none;
+}
+
+#find-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+#find-input {
+    width: 220px;
+    padding: 4px 22px 4px 8px;
+    font-size: 13px;
+    border: 1px solid #d0d7de;
+    border-radius: 4px;
+    outline: none;
+    font-family: inherit;
+    background: #ffffff;
+    color: #24292f;
+}
+
+#find-input:focus {
+    border-color: #0969da;
+    box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.2);
+}
+
+#find-clear {
+    position: absolute;
+    right: 3px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #8b949e;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 3px;
+    border-radius: 3px;
+}
+
+#find-clear:hover {
+    color: #24292f;
+    background: #eaeef2;
+}
+
+#find-match-count {
+    font-size: 12px;
+    color: #57606a;
+    min-width: 60px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+#find-bar button {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #57606a;
+    font-size: 14px;
+    padding: 2px 6px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#find-bar button:hover {
+    background: #eaeef2;
+    border-color: #d0d7de;
+    color: #24292f;
+}
+
+#find-prev,
+#find-next {
+    font-size: 10px;
+}
+
+#find-close {
+    font-size: 18px;
+    margin-left: 4px;
+}
+
+.find-option {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 12px;
+    color: #57606a;
+    cursor: pointer;
+    padding: 2px 6px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    user-select: none;
+}
+
+.find-option:hover {
+    background: #eaeef2;
+    border-color: #d0d7de;
+}
+
+.find-option input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.find-option span {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+}
+
+.find-whole-word-icon {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* Match highlights */
+mark.search-highlight {
+    background: #fff3a8;
+    color: inherit;
+    padding: 1px 0;
+    border-radius: 2px;
+}
+
+mark.search-highlight.active {
+    background: #f0a030;
+    outline: 2px solid #d68a1e;
+}

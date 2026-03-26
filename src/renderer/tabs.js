@@ -69,6 +69,12 @@ function switchTab(id) {
         document.title = `${tab.title} - Markdown Viewer`
     }
 
+    // Regenerate TOC for the new active tab
+    const body = getMarkdownBody(id)
+    if (body) {
+        TOC.generateTOC(body)
+    }
+
     saveSession()
 }
 
