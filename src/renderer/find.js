@@ -111,6 +111,7 @@ function openFindBar() {
 function closeFindBar() {
     if (!findBarEl) return
     findBarEl.classList.add("hidden")
+    findInput.value = ""
     clearHighlights()
     matchCountEl.textContent = ""
     currentIndex = -1
