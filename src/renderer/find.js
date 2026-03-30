@@ -198,23 +198,6 @@ function performSearch() {
         parent.removeChild(textNode)
     }
 
-    if (matches.length > 0) {
-        // Find the first match at or below the current line
-        const scrollTop = typeof Cursor !== "undefined" ? Cursor.getPixel() : document.getElementById("content-area").scrollTop
-        currentIndex = 0
-        for (let i = 0; i < matches.length; i++) {
-            if (matches[i].offsetTop >= scrollTop) {
-                currentIndex = i
-                break
-            }
-        }
-        matches[currentIndex].classList.add("active")
-        matches[currentIndex].scrollIntoView({ block: "center", behavior: "smooth" })
-        if (typeof Cursor !== "undefined") {
-            Cursor.update(matches[currentIndex].offsetTop)
-        }
-    }
-
     updateMatchCount()
     updateScrollMarkers()
 }
@@ -225,16 +208,17 @@ function navigateMatch(direction) {
     const wrap = typeof Settings !== "undefined" && Settings.getWrapNavigation()
     const cursorPx = typeof Cursor !== "undefined" ? Cursor.getPixel() : null
 
-    // If cursor has moved away from the current match, find relative to cursor
     let newIndex
-    if (cursorPx !== null && currentIndex >= 0 && Math.abs(matches[currentIndex].offsetTop - cursorPx) > 20) {
+    // No active match yet — find the first match relative to cursor
+    if (currentIndex === -1 || (cursorPx !== null && currentIndex >= 0 && Math.abs(matches[currentIndex].offsetTop - cursorPx) > 20)) {
+        const refPx = cursorPx !== null ? cursorPx : document.getElementById("content-area").scrollTop
         if (direction > 0) {
-            newIndex = matches.findIndex((m) => m.offsetTop > cursorPx)
+            newIndex = matches.findIndex((m) => m.offsetTop >= refPx)
             if (newIndex === -1) newIndex = wrap ? 0 : -1
         } else {
             newIndex = -1
             for (let i = matches.length - 1; i >= 0; i--) {
-                if (matches[i].offsetTop < cursorPx) { newIndex = i; break }
+                if (matches[i].offsetTop <= refPx) { newIndex = i; break }
             }
             if (newIndex === -1) newIndex = wrap ? matches.length - 1 : -1
         }
@@ -245,7 +229,7 @@ function navigateMatch(direction) {
         newIndex = (newIndex + matches.length) % matches.length
     }
 
-    matches[currentIndex].classList.remove("active")
+    if (currentIndex >= 0) matches[currentIndex].classList.remove("active")
     currentIndex = newIndex
     matches[currentIndex].classList.add("active")
     matches[currentIndex].scrollIntoView({ block: "center", behavior: "smooth" })
@@ -261,6 +245,8 @@ function navigateMatch(direction) {
 function updateMatchCount() {
     if (matches.length === 0) {
         matchCountEl.textContent = findInput.value ? "0 results" : ""
+    } else if (currentIndex === -1) {
+        matchCountEl.textContent = `${matches.length} results`
     } else {
         matchCountEl.textContent = `${currentIndex + 1} of ${matches.length}`
     }
