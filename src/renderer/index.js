@@ -110,6 +110,13 @@ document.addEventListener("DOMContentLoaded", () => {
         Cursor.setFromClick(e.clientY)
     })
 
+    // Global ESC to close search
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && Find.isOpen()) {
+            Find.closeFindBar()
+        }
+    })
+
     // Save session before app closes
     window.addEventListener("beforeunload", () => {
         Tabs.saveSession()

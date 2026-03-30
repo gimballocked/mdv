@@ -367,4 +367,8 @@ function refreshSearch() {
 }
 
 // eslint-disable-next-line no-unused-vars
-const Find = { toggleFind, closeFindBar, clearHighlights, refreshSearch }
+function isOpen() {
+    return findBarEl && !findBarEl.classList.contains("hidden")
+}
+
+const Find = { toggleFind, closeFindBar, clearHighlights, refreshSearch, isOpen }
