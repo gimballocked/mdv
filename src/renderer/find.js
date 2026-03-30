@@ -7,6 +7,34 @@ let matchCase = false
 let wholeWord = false
 let debounceTimer = null
 
+// Search history FIFO (max 3)
+const MAX_HISTORY = 3
+let searchHistory = []
+let historyIndex = -1 // -1 = current (new) input, 0 = most recent, etc.
+let currentInput = "" // holds the user's in-progress text when navigating history
+
+try {
+    const saved = localStorage.getItem("mdv-find-history")
+    if (saved) searchHistory = JSON.parse(saved)
+} catch (_e) {
+    // ignore
+}
+
+function addToHistory(query) {
+    if (!query) return
+    // Remove duplicate if already in history
+    const idx = searchHistory.indexOf(query)
+    if (idx !== -1) searchHistory.splice(idx, 1)
+    searchHistory.unshift(query)
+    if (searchHistory.length > MAX_HISTORY) searchHistory.pop()
+    try { localStorage.setItem("mdv-find-history", JSON.stringify(searchHistory)) } catch (_e) { /* ignore */ }
+}
+
+function resetHistoryNavigation() {
+    historyIndex = -1
+    currentInput = ""
+}
+
 function createFindBar() {
     if (findBarEl) return
 
@@ -47,6 +75,7 @@ function createFindBar() {
     matchCountEl = document.getElementById("find-match-count")
 
     findInput.addEventListener("input", () => {
+        resetHistoryNavigation()
         if (debounceTimer) clearTimeout(debounceTimer)
         debounceTimer = setTimeout(() => performSearch(), 200)
     })
@@ -54,6 +83,8 @@ function createFindBar() {
     findInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             e.preventDefault()
+            addToHistory(findInput.value)
+            resetHistoryNavigation()
             if (e.shiftKey) {
                 navigateMatch(-1)
             } else {
@@ -61,6 +92,25 @@ function createFindBar() {
             }
         } else if (e.key === "Escape") {
             closeFindBar()
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault()
+            if (searchHistory.length === 0) return
+            if (historyIndex === -1) currentInput = findInput.value
+            const nextIdx = historyIndex + 1
+            if (nextIdx >= searchHistory.length) return
+            historyIndex = nextIdx
+            findInput.value = searchHistory[historyIndex]
+            performSearch()
+        } else if (e.key === "ArrowDown") {
+            e.preventDefault()
+            if (historyIndex <= 0) return
+            historyIndex--
+            if (historyIndex === -1) {
+                findInput.value = currentInput
+            } else {
+                findInput.value = searchHistory[historyIndex]
+            }
+            performSearch()
         }
     })
 
@@ -112,6 +162,7 @@ function closeFindBar() {
     if (!findBarEl) return
     findBarEl.classList.add("hidden")
     findInput.value = ""
+    resetHistoryNavigation()
     clearHighlights()
     matchCountEl.textContent = ""
     currentIndex = -1
