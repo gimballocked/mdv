@@ -133,6 +133,11 @@ function closeTab(id) {
     const idx = tabs.findIndex((t) => t.id === id)
     if (idx === -1) return
 
+    // Close search UI when closing a tab
+    if (typeof Find !== "undefined") {
+        Find.closeFindBar()
+    }
+
     const tab = tabs[idx]
 
     // Unwatch the file and delete bookmarks
