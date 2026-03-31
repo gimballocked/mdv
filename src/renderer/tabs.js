@@ -58,6 +58,7 @@ function createTab(filePath, title) {
     })
 
     tabBar().appendChild(btn)
+    btn.scrollIntoView({ inline: "end", block: "nearest" })
 
     // Create content div
     const div = document.createElement("div")
