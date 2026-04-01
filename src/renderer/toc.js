@@ -60,13 +60,26 @@ function setupScrollTracking(container, headings) {
     }
 
     const scrollParent = document.getElementById("content-area")
+    const visibleHeadings = new Set()
 
     tocObserver = new IntersectionObserver(
         (entries) => {
             for (const entry of entries) {
                 if (entry.isIntersecting) {
-                    highlightTocItem(entry.target.id)
+                    visibleHeadings.add(entry.target)
+                } else {
+                    visibleHeadings.delete(entry.target)
                 }
+            }
+            // Highlight the topmost visible heading
+            let topmost = null
+            for (const h of visibleHeadings) {
+                if (!topmost || h.offsetTop < topmost.offsetTop) {
+                    topmost = h
+                }
+            }
+            if (topmost) {
+                highlightTocItem(topmost.id)
             }
         },
         {
