@@ -1,5 +1,6 @@
 let tocObserver = null
 let tocVisible = false
+let tocScrollLocked = 0
 
 function generateTOC(container) {
     const sidebar = document.getElementById("toc-sidebar")
@@ -41,6 +42,7 @@ function generateTOC(container) {
         a.textContent = h.textContent
         a.addEventListener("click", (e) => {
             e.preventDefault()
+            tocScrollLocked = Date.now() + 2000
             h.scrollIntoView({ behavior: "smooth" })
         })
         li.appendChild(a)
@@ -103,8 +105,8 @@ function highlightTocItem(id) {
         a.classList.toggle("active", isActive)
         if (isActive) activeLink = a
     }
-    // Scroll the TOC sidebar so the active item is visible
-    if (activeLink) {
+    // Scroll the TOC sidebar so the active item is visible (unless a TOC click is in progress)
+    if (activeLink && Date.now() >= tocScrollLocked) {
         activeLink.scrollIntoView({ block: "nearest", behavior: "smooth" })
     }
 }
