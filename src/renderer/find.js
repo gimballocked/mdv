@@ -175,6 +175,16 @@ function getActiveBody() {
     return Tabs.getMarkdownBody(tab.id)
 }
 
+// Normalize typographic characters to ASCII equivalents for search matching
+function normalizeQuotes(str) {
+    return str
+        .replace(/[\u2018\u2019\u201A\u2039\u203A]/g, "'")
+        .replace(/[\u201C\u201D\u201E\u00AB\u00BB]/g, '"')
+        .replace(/[\u2013]/g, "-")
+        .replace(/[\u2014]/g, "--")
+        .replace(/[\u2026]/g, "...")
+}
+
 function performSearch() {
     clearHighlights()
     matches = []
@@ -189,10 +199,11 @@ function performSearch() {
     const body = getActiveBody()
     if (!body) return
 
-    // Build regex from query
+    // Build regex from query, normalizing smart quotes
+    const normalizedQuery = normalizeQuotes(query)
     let pattern
     try {
-        const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+        const escaped = normalizedQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
         const wrapped = wholeWord ? `\\b${escaped}\\b` : escaped
         const flags = matchCase ? "g" : "gi"
         pattern = new RegExp(wrapped, flags)
@@ -210,7 +221,9 @@ function performSearch() {
     }
 
     for (const textNode of textNodes) {
-        const text = textNode.textContent
+        // Normalize text for matching but use original text for display
+        const originalText = textNode.textContent
+        const text = normalizeQuotes(originalText)
         let match
         const fragments = []
         let lastIndex = 0
@@ -218,9 +231,9 @@ function performSearch() {
         pattern.lastIndex = 0
         while ((match = pattern.exec(text)) !== null) {
             if (match.index > lastIndex) {
-                fragments.push({ text: text.slice(lastIndex, match.index), highlight: false })
+                fragments.push({ text: originalText.slice(lastIndex, match.index), highlight: false })
             }
-            fragments.push({ text: match[0], highlight: true })
+            fragments.push({ text: originalText.slice(match.index, match.index + match[0].length), highlight: true })
             lastIndex = pattern.lastIndex
             // Prevent infinite loop on zero-length matches
             if (match[0].length === 0) {
@@ -230,8 +243,8 @@ function performSearch() {
 
         if (fragments.length === 0) continue
 
-        if (lastIndex < text.length) {
-            fragments.push({ text: text.slice(lastIndex), highlight: false })
+        if (lastIndex < originalText.length) {
+            fragments.push({ text: originalText.slice(lastIndex), highlight: false })
         }
 
         const parent = textNode.parentNode
