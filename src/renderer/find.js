@@ -175,14 +175,14 @@ function getActiveBody() {
     return Tabs.getMarkdownBody(tab.id)
 }
 
-// Normalize typographic characters to ASCII equivalents for search matching
+// Normalize typographic characters to ASCII equivalents for search matching.
+// All replacements must be 1-to-1 to preserve string length alignment with the original text.
 function normalizeQuotes(str) {
     return str
         .replace(/[\u2018\u2019\u201A\u2039\u203A]/g, "'")
         .replace(/[\u201C\u201D\u201E\u00AB\u00BB]/g, '"')
-        .replace(/[\u2013]/g, "-")
-        .replace(/[\u2014]/g, "--")
-        .replace(/[\u2026]/g, "...")
+        .replace(/[\u2013\u2014]/g, "-")
+        .replace(/[\u2026]/g, ".")
 }
 
 function performSearch() {
