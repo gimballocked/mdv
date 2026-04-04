@@ -3,6 +3,7 @@ let findInput = null
 let matchCountEl = null
 let currentIndex = -1
 let matches = []
+let matchPositions = [] // absolute document positions, computed once at search time
 let matchCase = false
 let wholeWord = false
 let debounceTimer = null
@@ -262,6 +263,16 @@ function performSearch() {
         parent.removeChild(textNode)
     }
 
+    // Compute absolute document positions with bookmark margin collapsed
+    // so positions are relative to the true content height (matching the gradient)
+    const area = document.getElementById("content-area")
+    const bookmarkMargin = document.getElementById("bookmark-margin")
+    if (bookmarkMargin) bookmarkMargin.style.height = "0"
+    const areaRect = area.getBoundingClientRect()
+    matchPositions = matches.map((m) => m.getBoundingClientRect().top - areaRect.top + area.scrollTop)
+    const scrollHeight = area.scrollHeight
+    if (bookmarkMargin) bookmarkMargin.style.height = scrollHeight + "px"
+
     updateMatchCount()
     updateScrollMarkers()
 }
@@ -317,13 +328,24 @@ function updateMatchCount() {
 }
 
 function updateScrollMarkers() {
-    const area = document.getElementById("content-area")
-    if (!area) return
+    let track = document.getElementById("find-scroll-markers")
+    if (!track) {
+        track = document.createElement("div")
+        track.id = "find-scroll-markers"
+        document.getElementById("main-container").appendChild(track)
+    }
 
-    if (matches.length === 0) {
-        area.style.removeProperty("--find-scrollbar-gradient")
+    track.innerHTML = ""
+
+    if (matchPositions.length === 0) {
+        track.classList.add("hidden")
         return
     }
+
+    track.classList.remove("hidden")
+
+    const area = document.getElementById("content-area")
+    if (!area) return
 
     // Collapse bookmark margin before measuring so it doesn't inflate scrollHeight
     const bookmarkMargin = document.getElementById("bookmark-margin")
@@ -331,28 +353,16 @@ function updateScrollMarkers() {
     const scrollHeight = area.scrollHeight
     if (bookmarkMargin) bookmarkMargin.style.height = scrollHeight + "px"
 
-    // Build gradient stops to paint markers directly on the scrollbar track.
-    // This guarantees alignment since the browser maps the gradient to the
-    // same coordinate space as the scrollbar thumb.
-    const markerPx = 3 // marker thickness in screen pixels
-    const markerPct = area.clientHeight > 0 ? (markerPx / area.clientHeight) * 100 : 0.2
-    const areaRect = area.getBoundingClientRect()
-    const stops = []
-
-    for (let i = 0; i < matches.length; i++) {
-        const matchRect = matches[i].getBoundingClientRect()
-        const docOffset = matchRect.top - areaRect.top + area.scrollTop
-        const pct = scrollHeight > 0 ? (docOffset / scrollHeight) * 100 : 0
-        const color = i === currentIndex ? "#d45500" : "#e8a517"
-        const start = Math.max(0, pct - markerPct / 2)
-        const end = Math.min(100, pct + markerPct / 2)
-        stops.push(`transparent ${start}%`)
-        stops.push(`${color} ${start}%`)
-        stops.push(`${color} ${end}%`)
-        stops.push(`transparent ${end}%`)
+    // Use pre-computed positions and area.clientHeight as track height
+    const trackHeight = area.clientHeight
+    for (let i = 0; i < matchPositions.length; i++) {
+        const marker = document.createElement("div")
+        marker.className = "find-scroll-marker"
+        if (i === currentIndex) marker.classList.add("active")
+        const top = scrollHeight > 0 ? (matchPositions[i] / scrollHeight) * trackHeight : 0
+        marker.style.top = top + "px"
+        track.appendChild(marker)
     }
-
-    area.style.setProperty("--find-scrollbar-gradient", `linear-gradient(to bottom, ${stops.join(", ")})`)
 }
 
 function clearHighlights() {
@@ -366,10 +376,14 @@ function clearHighlights() {
         parent.normalize()
     }
     matches = []
+    matchPositions = []
     currentIndex = -1
 
-    const area = document.getElementById("content-area")
-    if (area) area.style.removeProperty("--find-scrollbar-gradient")
+    const track = document.getElementById("find-scroll-markers")
+    if (track) {
+        track.innerHTML = ""
+        track.classList.add("hidden")
+    }
 }
 
 function refreshSearch() {
