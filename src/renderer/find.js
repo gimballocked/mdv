@@ -328,24 +328,13 @@ function updateMatchCount() {
 }
 
 function updateScrollMarkers() {
-    let track = document.getElementById("find-scroll-markers")
-    if (!track) {
-        track = document.createElement("div")
-        track.id = "find-scroll-markers"
-        document.getElementById("main-container").appendChild(track)
-    }
-
-    track.innerHTML = ""
-
-    if (matchPositions.length === 0) {
-        track.classList.add("hidden")
-        return
-    }
-
-    track.classList.remove("hidden")
-
     const area = document.getElementById("content-area")
     if (!area) return
+
+    if (matchPositions.length === 0) {
+        area.style.removeProperty("--find-scrollbar-gradient")
+        return
+    }
 
     // Collapse bookmark margin before measuring so it doesn't inflate scrollHeight
     const bookmarkMargin = document.getElementById("bookmark-margin")
@@ -353,16 +342,41 @@ function updateScrollMarkers() {
     const scrollHeight = area.scrollHeight
     if (bookmarkMargin) bookmarkMargin.style.height = scrollHeight + "px"
 
-    // Use pre-computed positions and area.clientHeight as track height
-    const trackHeight = area.clientHeight
+    // Compute marker percentage positions, rounded to 1 decimal place
+    const markerHalf = 0.2 // half-width of each marker in percent
+    const markers = []
     for (let i = 0; i < matchPositions.length; i++) {
-        const marker = document.createElement("div")
-        marker.className = "find-scroll-marker"
-        if (i === currentIndex) marker.classList.add("active")
-        const top = scrollHeight > 0 ? (matchPositions[i] / scrollHeight) * trackHeight : 0
-        marker.style.top = top + "px"
-        track.appendChild(marker)
+        const pct = Math.round(matchPositions[i] / scrollHeight * 1000) / 10
+        markers.push({ pct, isActive: i === currentIndex })
     }
+    markers.sort((a, b) => a.pct - b.pct)
+
+    // Merge overlapping/adjacent ranges
+    const ranges = []
+    for (const m of markers) {
+        const start = Math.max(0, m.pct - markerHalf)
+        const end = Math.min(100, m.pct + markerHalf)
+        const color = m.isActive ? "#d45500" : "#e8a517"
+        const last = ranges[ranges.length - 1]
+        if (last && start <= last.end + 0.1) {
+            last.end = Math.max(last.end, end)
+            if (m.isActive) last.color = color
+        } else {
+            ranges.push({ start, end, color })
+        }
+    }
+
+    // Build gradient
+    const stops = ["transparent 0%"]
+    for (const r of ranges) {
+        stops.push(`transparent ${r.start}%`)
+        stops.push(`${r.color} ${r.start}%`)
+        stops.push(`${r.color} ${r.end}%`)
+        stops.push(`transparent ${r.end}%`)
+    }
+    stops.push("transparent 100%")
+
+    area.style.setProperty("--find-scrollbar-gradient", `linear-gradient(to bottom, ${stops.join(",")}`)
 }
 
 function clearHighlights() {
@@ -379,11 +393,8 @@ function clearHighlights() {
     matchPositions = []
     currentIndex = -1
 
-    const track = document.getElementById("find-scroll-markers")
-    if (track) {
-        track.innerHTML = ""
-        track.classList.add("hidden")
-    }
+    const area = document.getElementById("content-area")
+    if (area) area.style.removeProperty("--find-scrollbar-gradient")
 }
 
 function refreshSearch() {
