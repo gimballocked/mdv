@@ -203,7 +203,6 @@ function updateEmptyState() {
     tabBar().classList.toggle("hidden", tabs.length === 0)
 }
 
-
 function saveSession() {
     if (restoringSession) return
     try {
@@ -262,9 +261,7 @@ function moveTab(id, direction) {
     const idx = tabs.findIndex((t) => t.id === id)
     if (idx === -1) return
     const newIdx = idx + direction
-    if (newIdx < 0 || newIdx >= tabs.length) return
-
-    // Swap in array
+    if (newIdx < 0 || newIdx >= tabs.length) return // Swap in array
     ;[tabs[idx], tabs[newIdx]] = [tabs[newIdx], tabs[idx]]
 
     // Reorder DOM
@@ -288,4 +285,16 @@ function escapeHtml(str) {
 }
 
 // eslint-disable-next-line no-unused-vars
-const Tabs = { createTab, switchTab, closeTab, getActiveTab, findTabByPath, getMarkdownBody, getTabContentDiv, saveSession, getSession, setRestoring, moveTab }
+const Tabs = {
+    createTab,
+    switchTab,
+    closeTab,
+    getActiveTab,
+    findTabByPath,
+    getMarkdownBody,
+    getTabContentDiv,
+    saveSession,
+    getSession,
+    setRestoring,
+    moveTab
+}

@@ -19,7 +19,8 @@ export default [
                 Markdown: "readonly",
                 TOC: "readonly",
                 Themes: "readonly",
-                Links: "readonly"
+                Links: "readonly",
+                TableSort: "readonly"
             }
         },
         rules: {

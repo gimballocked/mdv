@@ -1,5 +1,13 @@
 const { Menu, app } = require("electron")
-const { sendOpenFile, sendToggleToc, sendSetTheme, sendMoveTab, sendToggleFind, sendBookmarkAction, sendToggleWrapNavigation } = require("./ipc-handlers")
+const {
+    sendOpenFile,
+    sendToggleToc,
+    sendSetTheme,
+    sendMoveTab,
+    sendToggleFind,
+    sendBookmarkAction,
+    sendToggleWrapNavigation
+} = require("./ipc-handlers")
 const fileManager = require("./file-manager")
 
 const themes = [

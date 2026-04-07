@@ -33,7 +33,10 @@ async function renderToContainer(source, container) {
         }
     }
 
-    // Step 4: KaTeX math rendering
+    // Step 4: Sortable tables
+    TableSort.init(container)
+
+    // Step 5: KaTeX math rendering
     if (typeof renderMathInElement === "function") {
         renderMathInElement(container, {
             delimiters: [
