@@ -28,7 +28,11 @@ function addToHistory(query) {
     if (idx !== -1) searchHistory.splice(idx, 1)
     searchHistory.unshift(query)
     if (searchHistory.length > MAX_HISTORY) searchHistory.pop()
-    try { localStorage.setItem("mdv-find-history", JSON.stringify(searchHistory)) } catch (_e) { /* ignore */ }
+    try {
+        localStorage.setItem("mdv-find-history", JSON.stringify(searchHistory))
+    } catch (_e) {
+        /* ignore */
+    }
 }
 
 function resetHistoryNavigation() {
@@ -129,13 +133,21 @@ function createFindBar() {
 
     document.getElementById("find-match-case").addEventListener("change", (e) => {
         matchCase = e.target.checked
-        try { localStorage.setItem("mdv-find-match-case", matchCase ? "1" : "0") } catch (_e) { /* ignore */ }
+        try {
+            localStorage.setItem("mdv-find-match-case", matchCase ? "1" : "0")
+        } catch (_e) {
+            /* ignore */
+        }
         performSearch()
     })
 
     document.getElementById("find-whole-word").addEventListener("change", (e) => {
         wholeWord = e.target.checked
-        try { localStorage.setItem("mdv-find-whole-word", wholeWord ? "1" : "0") } catch (_e) { /* ignore */ }
+        try {
+            localStorage.setItem("mdv-find-whole-word", wholeWord ? "1" : "0")
+        } catch (_e) {
+            /* ignore */
+        }
         performSearch()
     })
 }
@@ -285,7 +297,10 @@ function navigateMatch(direction) {
 
     let newIndex
     // No active match yet — find the first match relative to cursor
-    if (currentIndex === -1 || (cursorPx !== null && currentIndex >= 0 && Math.abs(matches[currentIndex].offsetTop - cursorPx) > 20)) {
+    if (
+        currentIndex === -1 ||
+        (cursorPx !== null && currentIndex >= 0 && Math.abs(matches[currentIndex].offsetTop - cursorPx) > 20)
+    ) {
         const refPx = cursorPx !== null ? cursorPx : document.getElementById("content-area").scrollTop
         if (direction > 0) {
             newIndex = matches.findIndex((m) => m.offsetTop >= refPx)
@@ -293,7 +308,10 @@ function navigateMatch(direction) {
         } else {
             newIndex = -1
             for (let i = matches.length - 1; i >= 0; i--) {
-                if (matches[i].offsetTop <= refPx) { newIndex = i; break }
+                if (matches[i].offsetTop <= refPx) {
+                    newIndex = i
+                    break
+                }
             }
             if (newIndex === -1) newIndex = wrap ? matches.length - 1 : -1
         }
@@ -346,7 +364,7 @@ function updateScrollMarkers() {
     const markerHalf = 0.2 // half-width of each marker in percent
     const markers = []
     for (let i = 0; i < matchPositions.length; i++) {
-        const pct = Math.round(matchPositions[i] / scrollHeight * 1000) / 10
+        const pct = Math.round((matchPositions[i] / scrollHeight) * 1000) / 10
         markers.push({ pct, isActive: i === currentIndex })
     }
     markers.sort((a, b) => a.pct - b.pct)

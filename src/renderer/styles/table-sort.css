@@ -1,0 +1,54 @@
+.markdown-body table {
+    max-width: none;
+}
+
+.markdown-body table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 22px;
+}
+
+.markdown-body table th.sortable:hover {
+    background-color: rgba(128, 128, 128, 0.1);
+}
+
+.markdown-body table th.sortable::after {
+    content: "";
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 4px solid transparent;
+    border-bottom-color: currentColor;
+    opacity: 0;
+    margin-top: -4px;
+}
+
+.markdown-body table th.sortable::before {
+    content: "";
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 4px solid transparent;
+    border-top-color: currentColor;
+    opacity: 0;
+    margin-top: 4px;
+}
+
+/* Show both arrows dimly on hover (unsorted) */
+.markdown-body table th.sortable:hover:not(.sort-asc):not(.sort-desc)::after,
+.markdown-body table th.sortable:hover:not(.sort-asc):not(.sort-desc)::before {
+    opacity: 0.3;
+}
+
+/* Ascending: up arrow solid */
+.markdown-body table th.sort-asc::after {
+    opacity: 0.7;
+}
+
+/* Descending: down arrow solid */
+.markdown-body table th.sort-desc::before {
+    opacity: 0.7;
+}

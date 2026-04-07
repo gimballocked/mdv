@@ -125,4 +125,13 @@ function sendToggleWrapNavigation(win) {
     }
 }
 
-module.exports = { registerIpcHandlers, sendOpenFile, sendToggleToc, sendSetTheme, sendMoveTab, sendToggleFind, sendBookmarkAction, sendToggleWrapNavigation }
+module.exports = {
+    registerIpcHandlers,
+    sendOpenFile,
+    sendToggleToc,
+    sendSetTheme,
+    sendMoveTab,
+    sendToggleFind,
+    sendBookmarkAction,
+    sendToggleWrapNavigation
+}

@@ -13,7 +13,8 @@ function setupLinkHandling(container) {
             const targetId = href.slice(1)
             const body = Tabs.getMarkdownBody()
             if (!body) return
-            let target = body.querySelector(`[id="${CSS.escape(targetId)}"]`) || body.querySelector(`[name="${CSS.escape(targetId)}"]`)
+            let target =
+                body.querySelector(`[id="${CSS.escape(targetId)}"]`) || body.querySelector(`[name="${CSS.escape(targetId)}"]`)
             if (target) {
                 // For empty anchors inside headings, scroll to the heading instead
                 const heading = target.closest("h1, h2, h3, h4, h5, h6")
