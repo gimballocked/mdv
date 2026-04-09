@@ -26,7 +26,11 @@ function getLinuxMaker() {
     if (isDebDistro()) {
         return {
             name: "@electron-forge/maker-deb",
-            config: { mimeType: ["text/markdown"], options: { name: "mdv", icon: iconPath } }
+            config: {
+                mimeType: ["text/markdown"],
+                desktopTemplate: path.join(__dirname, "assets", "desktop.ejs"),
+                options: { name: "mdv", icon: iconPath }
+            }
         }
     }
     if (isRpmDistro()) {
