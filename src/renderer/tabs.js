@@ -57,6 +57,12 @@ function createTab(filePath, title) {
         reorderTab(draggedId, id, insertBefore)
     })
 
+    // Right-click context menu
+    btn.addEventListener("contextmenu", (e) => {
+        e.preventDefault()
+        showTabContextMenu(id, e.clientX, e.clientY)
+    })
+
     tabBar().appendChild(btn)
     btn.scrollIntoView({ inline: "end", block: "nearest" })
 
@@ -231,6 +237,72 @@ function getSession() {
     } catch (_e) {
         return null
     }
+}
+
+function showTabContextMenu(tabId, x, y) {
+    // Remove any existing context menu
+    const existing = document.getElementById("tab-context-menu")
+    if (existing) existing.remove()
+
+    const menu = document.createElement("div")
+    menu.id = "tab-context-menu"
+    menu.style.left = x + "px"
+    menu.style.top = y + "px"
+
+    const idx = tabs.findIndex((t) => t.id === tabId)
+    const items = [
+        { label: "Close", action: () => closeTab(tabId) },
+        { label: "Close Other Tabs", action: () => closeOtherTabs(tabId), disabled: tabs.length <= 1 },
+        { label: "Close Tabs to the Right", action: () => closeTabsToRight(tabId), disabled: idx === tabs.length - 1 }
+    ]
+
+    for (const item of items) {
+        const div = document.createElement("div")
+        div.className = "tab-context-menu-item"
+        if (item.disabled) div.classList.add("disabled")
+        div.textContent = item.label
+        if (!item.disabled) {
+            div.addEventListener("click", () => {
+                menu.remove()
+                item.action()
+            })
+        }
+        menu.appendChild(div)
+    }
+
+    document.body.appendChild(menu)
+
+    // Close menu on click outside or escape
+    function dismiss(e) {
+        if (!menu.contains(e.target)) {
+            menu.remove()
+            document.removeEventListener("mousedown", dismiss)
+            document.removeEventListener("keydown", dismissKey)
+        }
+    }
+    function dismissKey(e) {
+        if (e.key === "Escape") {
+            menu.remove()
+            document.removeEventListener("mousedown", dismiss)
+            document.removeEventListener("keydown", dismissKey)
+        }
+    }
+    setTimeout(() => {
+        document.addEventListener("mousedown", dismiss)
+        document.addEventListener("keydown", dismissKey)
+    }, 0)
+}
+
+function closeOtherTabs(keepId) {
+    const toClose = tabs.filter((t) => t.id !== keepId).map((t) => t.id)
+    for (const id of toClose) closeTab(id)
+}
+
+function closeTabsToRight(tabId) {
+    const idx = tabs.findIndex((t) => t.id === tabId)
+    if (idx === -1) return
+    const toClose = tabs.slice(idx + 1).map((t) => t.id)
+    for (const id of toClose) closeTab(id)
 }
 
 function reorderTab(draggedId, targetId, insertBefore) {
