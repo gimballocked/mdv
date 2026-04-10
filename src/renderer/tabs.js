@@ -253,7 +253,8 @@ function showTabContextMenu(tabId, x, y) {
     const items = [
         { label: "Close", action: () => closeTab(tabId) },
         { label: "Close Other Tabs", action: () => closeOtherTabs(tabId), disabled: tabs.length <= 1 },
-        { label: "Close Tabs to the Right", action: () => closeTabsToRight(tabId), disabled: idx === tabs.length - 1 }
+        { label: "Close Tabs to the Right", action: () => closeTabsToRight(tabId), disabled: idx === tabs.length - 1 },
+        { label: "Close All", action: () => closeAllTabs() }
     ]
 
     for (const item of items) {
@@ -302,6 +303,11 @@ function closeTabsToRight(tabId) {
     const idx = tabs.findIndex((t) => t.id === tabId)
     if (idx === -1) return
     const toClose = tabs.slice(idx + 1).map((t) => t.id)
+    for (const id of toClose) closeTab(id)
+}
+
+function closeAllTabs() {
+    const toClose = tabs.map((t) => t.id)
     for (const id of toClose) closeTab(id)
 }
 
