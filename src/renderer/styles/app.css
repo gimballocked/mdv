@@ -156,6 +156,32 @@ body {
     margin: 0 auto;
 }
 
+/* Wide tables: wrapper div gets the horizontal scrollbar, table keeps natural width */
+.markdown-body .table-wrapper {
+    max-width: 100%;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+}
+
+.markdown-body .table-wrapper table {
+    display: table;
+    width: auto;
+    max-width: none;
+    overflow: visible;
+    margin-bottom: 0;
+}
+
+.markdown-body .table-wrapper td,
+.markdown-body .table-wrapper th {
+    white-space: nowrap;
+}
+
+/* Wide code blocks also get their own scrollbar */
+.markdown-body pre {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
 /* Empty State */
 #empty-state {
     display: flex;

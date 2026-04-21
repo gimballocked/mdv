@@ -33,7 +33,16 @@ async function renderToContainer(source, container) {
         }
     }
 
-    // Step 4: Sortable tables
+    // Step 4: Wrap tables in scrollable divs so wide tables get horizontal scrollbars
+    for (const table of container.querySelectorAll("table")) {
+        if (table.parentElement && table.parentElement.classList.contains("table-wrapper")) continue
+        const wrapper = document.createElement("div")
+        wrapper.className = "table-wrapper"
+        table.parentNode.insertBefore(wrapper, table)
+        wrapper.appendChild(table)
+    }
+
+    // Step 5: Sortable tables
     TableSort.init(container)
 
     // Step 5: KaTeX math rendering

@@ -1,7 +1,3 @@
-.markdown-body table {
-    max-width: none;
-}
-
 .markdown-body table th.sortable {
     cursor: pointer;
     user-select: none;
