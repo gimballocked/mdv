@@ -31,26 +31,39 @@ document.addEventListener("DOMContentLoaded", () => {
         const body = Tabs.getMarkdownBody(tab.id)
         if (!body) return
 
-        // Save scroll position from the actual scroll container
         const area = document.getElementById("content-area")
+        const previous = Tabs.getActiveTab()
+        const wasActive = previous && previous.id === tab.id
+
+        // Every pixel position in this tab is about to become meaningless. Bookmarks, the scroll
+        // position and the cursor are all put back afterwards by searching the new render for the
+        // text they were sitting on, which is captured here while the old render is still up.
+        Bookmarks.markStale(tab)
+        Tabs.markScrollStale(tab)
+        if (wasActive && area) {
+            tab.scrollTop = area.scrollTop
+            const index = TextAnchor.buildIndex(body)
+            Tabs.captureScrollAnchor(tab, index)
+            Cursor.captureAnchor(index)
+        }
+
         const scrollTop = area ? area.scrollTop : 0
 
         await Markdown.renderToContainer(data.content, body)
         Links.setupLinkHandling(body)
-        // Only update TOC if this is the active tab
+
+        // Only the active tab can be measured, so a background tab is re-anchored when it is shown
         const activeTab = Tabs.getActiveTab()
         if (activeTab && activeTab.id === tab.id) {
             TOC.generateTOC(body)
-        }
-
-        // Restore scroll position
-        if (area) {
+            // One index of the new render, shared by everything that needs putting back
+            const index = TextAnchor.buildIndex(body)
+            if (area) area.scrollTop = Tabs.resolveScrollTop(tab, index)
+            Cursor.restoreAnchor(index)
+            Bookmarks.refreshMarkers(index)
+        } else if (area) {
+            // Keep whichever tab is on screen where it was
             area.scrollTop = scrollTop
-        }
-
-        // Refresh bookmark markers after re-render (active tab only)
-        if (activeTab && activeTab.id === tab.id) {
-            Bookmarks.refreshMarkers()
         }
     })
 
@@ -117,8 +130,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     })
 
-    // Save session before app closes
+    // Save session before app closes, anchoring the reading position to text so it can be
+    // restored exactly even if the file is edited while the app is not running
     window.addEventListener("beforeunload", () => {
+        const tab = Tabs.getActiveTab()
+        if (tab) {
+            tab.scrollTop = contentAreaEl.scrollTop
+            Tabs.captureScrollAnchor(tab)
+        }
         Tabs.saveSession()
     })
 
@@ -136,7 +155,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 await openFile(saved.filePath)
                 // Patch saved scroll into the tab object
                 const tab = Tabs.findTabByPath(saved.filePath)
-                if (tab) tab.scrollTop = saved.scrollTop || 0
+                if (tab) {
+                    tab.scrollTop = saved.scrollTop || 0
+                    tab.scrollAnchor = saved.scrollAnchor || null
+                    // The file may have been edited since the session was saved
+                    Tabs.markScrollStale(tab)
+                }
             }
             // Switch to the previously active tab
             if (session.activeTab) {
@@ -150,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
             requestAnimationFrame(() => {
                 const activeTab = Tabs.getActiveTab()
                 if (activeTab) {
-                    document.getElementById("content-area").scrollTop = activeTab.scrollTop
+                    document.getElementById("content-area").scrollTop = Tabs.resolveScrollTop(activeTab)
                 }
             })
         }
@@ -184,6 +208,14 @@ async function openFile(filePath) {
         await Markdown.renderToContainer(data.content, body)
         Links.setupLinkHandling(body)
         TOC.generateTOC(body)
+
+        // Any saved bookmarks were positioned against an earlier render of this file, which may
+        // have changed on disk since, so re-derive their positions from their anchor text
+        const tab = Tabs.findTabByPath(data.filePath)
+        if (tab) {
+            Bookmarks.markStale(tab)
+            Bookmarks.refreshMarkers()
+        }
     }
 
     // Start watching for changes

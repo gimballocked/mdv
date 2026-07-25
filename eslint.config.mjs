@@ -20,7 +20,12 @@ export default [
                 TOC: "readonly",
                 Themes: "readonly",
                 Links: "readonly",
-                TableSort: "readonly"
+                TableSort: "readonly",
+                TextAnchor: "readonly",
+                Bookmarks: "readonly",
+                Cursor: "readonly",
+                Find: "readonly",
+                Settings: "readonly"
             }
         },
         rules: {

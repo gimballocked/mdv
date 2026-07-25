@@ -8,7 +8,7 @@ const contentArea = () => document.getElementById("content-area")
 
 function createTab(filePath, title) {
     const id = nextTabId++
-    const tab = { id, filePath, title, scrollTop: 0, content: "" }
+    const tab = { id, filePath, title, scrollTop: 0, scrollAnchor: null, content: "" }
     tabs.push(tab)
 
     // Create tab button
@@ -91,6 +91,9 @@ function switchTab(id) {
         const current = findTab(activeTabId)
         if (current) {
             current.scrollTop = contentArea().scrollTop
+            // Anchor it to text while this tab is still laid out, so that a hot-reload while it
+            // sits in the background cannot lose the reader's place
+            captureScrollAnchor(current)
         }
     }
 
@@ -109,7 +112,7 @@ function switchTab(id) {
     // Restore scroll on the actual scroll container
     const tab = findTab(id)
     if (tab) {
-        contentArea().scrollTop = tab.scrollTop
+        contentArea().scrollTop = resolveScrollTop(tab)
     }
 
     // Update window title
@@ -184,6 +187,47 @@ function getActiveTab() {
     return findTab(activeTabId)
 }
 
+// Reuse the caller's text index when it belongs to this tab, otherwise build one
+function indexFor(tab, index) {
+    const body = getMarkdownBody(tab.id)
+    if (!body) return null
+    return index && index.body === body ? index : TextAnchor.buildIndex(body)
+}
+
+// A tab's scroll position is remembered as the text at the top of the viewport plus the offset of
+// that line from the viewport edge, so it survives content being added or removed above it.
+function captureScrollAnchor(tab, sharedIndex) {
+    tab.scrollAnchor = null
+    if (tab.scrollTop <= 0) return // the top of the document needs no anchor
+
+    const index = indexFor(tab, sharedIndex)
+    if (!index) return
+
+    const captured = TextAnchor.capture(index, tab.scrollTop)
+    // `at` records the offset this anchor describes, so a scroll position saved later without a
+    // fresh anchor (a scroll during a session save, say) is never restored through a stale one
+    if (captured) tab.scrollAnchor = { captured, offset: tab.scrollTop - captured.y, at: tab.scrollTop }
+}
+
+// Called when a tab's file is re-rendered: its saved pixel offset no longer means anything.
+function markScrollStale(tab) {
+    tab.scrollStale = true
+}
+
+// The scroll position to show this tab at. After a re-render it is re-derived from the anchor,
+// falling back to the saved offset when the text it pointed at is gone.
+function resolveScrollTop(tab, sharedIndex) {
+    if (!tab.scrollStale) return tab.scrollTop
+    if (tab.scrollAnchor && tab.scrollAnchor.at === tab.scrollTop) {
+        const index = indexFor(tab, sharedIndex)
+        if (!index) return tab.scrollTop // no layout yet; try again once the tab is visible
+        const y = TextAnchor.resolve(index, tab.scrollAnchor.captured)
+        if (y !== null) tab.scrollTop = Math.max(0, y + tab.scrollAnchor.offset)
+    }
+    tab.scrollStale = false
+    return tab.scrollTop
+}
+
 function findTab(id) {
     return tabs.find((t) => t.id === id) || null
 }
@@ -218,7 +262,9 @@ function saveSession() {
             active.scrollTop = contentArea().scrollTop
         }
         const data = {
-            tabs: tabs.map((t) => ({ filePath: t.filePath, scrollTop: t.scrollTop })),
+            // The anchor lets the reading position be recovered even if the file is edited
+            // before the session is restored
+            tabs: tabs.map((t) => ({ filePath: t.filePath, scrollTop: t.scrollTop, scrollAnchor: t.scrollAnchor || null })),
             activeTab: active ? active.filePath : null
         }
         localStorage.setItem("mdv-session", JSON.stringify(data))
@@ -371,6 +417,9 @@ const Tabs = {
     findTabByPath,
     getMarkdownBody,
     getTabContentDiv,
+    captureScrollAnchor,
+    markScrollStale,
+    resolveScrollTop,
     saveSession,
     getSession,
     setRestoring,

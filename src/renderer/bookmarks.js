@@ -35,13 +35,19 @@ function toggle() {
 function toggleAtPosition(tab, pixelY) {
     if (!tab.bookmarks) tab.bookmarks = loadBookmarks(tab.filePath)
 
-    // Check if near an existing bookmark
-    const existing = tab.bookmarks.findIndex((b) => Math.abs(b - pixelY) < SNAP_PX)
+    // Anchor the bookmark to the text of the line it lands on, and snap it to that line
+    const body = Tabs.getMarkdownBody(tab.id)
+    const index = body ? TextAnchor.buildIndex(body) : null
+    const created = index ? TextAnchor.capture(index, pixelY) : null
+    const y = created ? created.y : pixelY
+
+    // Check if near an existing bookmark, before or after snapping
+    const existing = tab.bookmarks.findIndex((b) => Math.abs(b.y - pixelY) < SNAP_PX || Math.abs(b.y - y) < SNAP_PX)
     if (existing !== -1) {
         tab.bookmarks.splice(existing, 1)
     } else {
-        tab.bookmarks.push(pixelY)
-        tab.bookmarks.sort((a, b) => a - b)
+        tab.bookmarks.push(created || { y })
+        tab.bookmarks.sort((a, b) => a.y - b.y)
     }
 
     saveBookmarks(tab.filePath, tab.bookmarks)
@@ -56,14 +62,14 @@ function next() {
     if (!area) return
     const current = typeof Cursor !== "undefined" ? Cursor.getPixel() : area.scrollTop
 
-    let target = tab.bookmarks.find((b) => b > current + SNAP_PX)
+    let target = tab.bookmarks.find((b) => b.y > current + SNAP_PX)
     if (target === undefined) {
         const wrap = typeof Settings !== "undefined" && Settings.getWrapNavigation()
         if (!wrap) return
         target = tab.bookmarks[0]
     }
 
-    scrollToBookmark(area, target)
+    scrollToBookmark(area, target.y)
 }
 
 function prev() {
@@ -76,7 +82,7 @@ function prev() {
 
     let target = null
     for (let i = tab.bookmarks.length - 1; i >= 0; i--) {
-        if (tab.bookmarks[i] < current - SNAP_PX) {
+        if (tab.bookmarks[i].y < current - SNAP_PX) {
             target = tab.bookmarks[i]
             break
         }
@@ -87,7 +93,7 @@ function prev() {
         target = tab.bookmarks[tab.bookmarks.length - 1]
     }
 
-    scrollToBookmark(area, target)
+    scrollToBookmark(area, target.y)
 }
 
 function scrollToBookmark(area, pixelY) {
@@ -119,18 +125,26 @@ function updateMarkers() {
     const tab = Tabs.getActiveTab()
     if (!tab || !tab.bookmarks || tab.bookmarks.length === 0) return
 
-    for (const px of tab.bookmarks) {
+    for (const b of tab.bookmarks) {
         const marker = document.createElement("div")
         marker.className = "bookmark-marker"
-        marker.style.top = px + "px"
+        marker.style.top = b.y + "px"
         marginEl.appendChild(marker)
     }
 }
 
-function refreshMarkers() {
+// Called when a file is hot-reloaded. The re-render invalidates every pixel position, but a
+// background tab has no layout to measure, so the work is deferred until the tab is shown.
+function markStale(tab) {
+    tab.bookmarksStale = true
+}
+
+function refreshMarkers(sharedIndex) {
     const tab = Tabs.getActiveTab()
     if (!tab) return
     if (!tab.bookmarks) tab.bookmarks = loadBookmarks(tab.filePath)
+
+    if (tab.bookmarksStale) reanchor(tab, sharedIndex)
 
     // Prune bookmarks beyond content after a hot-reload
     const area = document.getElementById("content-area")
@@ -140,13 +154,50 @@ function refreshMarkers() {
             const lastChild = body.lastElementChild
             if (lastChild) {
                 const contentBottom = lastChild.offsetTop + lastChild.offsetHeight
-                tab.bookmarks = tab.bookmarks.filter((b) => b <= contentBottom)
+                tab.bookmarks = tab.bookmarks.filter((b) => b.y <= contentBottom)
                 saveBookmarks(tab.filePath, tab.bookmarks)
             }
         }
     }
 
     updateMarkers()
+}
+
+// Re-derive pixel positions by searching the re-rendered document for each bookmark's stashed
+// text. Bookmarks whose line no longer exists are dropped rather than left pointing at nothing.
+function reanchor(tab, sharedIndex) {
+    if (!tab.bookmarks.some((b) => b.text)) {
+        tab.bookmarksStale = false
+        return
+    }
+
+    const body = Tabs.getMarkdownBody(tab.id)
+    if (!body) return
+    const index = sharedIndex && sharedIndex.body === body ? sharedIndex : TextAnchor.buildIndex(body)
+    if (!index) return // no layout yet; try again once the tab is visible
+
+    // Editors that truncate before writing can hand us an empty file for one reload. That is no
+    // reason to throw bookmarks away, so keep them and re-anchor when the content comes back.
+    if (!index.text) return
+
+    tab.bookmarksStale = false
+
+    const kept = []
+    for (const b of tab.bookmarks) {
+        if (!b.text) {
+            kept.push(b) // never anchored (an older bookmark); leave it to pruning
+            continue
+        }
+        const y = TextAnchor.resolve(index, b)
+        if (y !== null) {
+            b.y = y
+            kept.push(b)
+        }
+    }
+
+    kept.sort((a, b) => a.y - b.y)
+    tab.bookmarks = kept
+    saveBookmarks(tab.filePath, tab.bookmarks)
 }
 
 function deleteBookmarks(filePath) {
@@ -172,7 +223,11 @@ function saveBookmarks(filePath, bookmarks) {
 function loadBookmarks(filePath) {
     try {
         const data = localStorage.getItem("mdv-bookmarks-" + filePath)
-        if (data) return JSON.parse(data)
+        if (data) {
+            const parsed = JSON.parse(data)
+            // Bookmarks used to be stored as bare pixel positions, with no anchor text
+            return parsed.map((b) => (typeof b === "number" ? { y: b } : b))
+        }
     } catch (_e) {
         // ignore
     }
@@ -180,4 +235,4 @@ function loadBookmarks(filePath) {
 }
 
 // eslint-disable-next-line no-unused-vars
-const Bookmarks = { toggle, next, prev, clearAll, refreshMarkers, deleteBookmarks }
+const Bookmarks = { toggle, next, prev, clearAll, markStale, refreshMarkers, deleteBookmarks }
